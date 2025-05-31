@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.orders.service;
 
+import com.appsdeveloperblog.core.events.OrderApprovedEvent;
 import com.appsdeveloperblog.core.events.OrderCreatedEvent;
 import com.appsdeveloperblog.core.dto.Order;
 import com.appsdeveloperblog.core.types.OrderStatus;
@@ -8,6 +9,9 @@ import com.appsdeveloperblog.orders.dao.jpa.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import java.util.UUID;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -49,4 +53,13 @@ public class OrderServiceImpl implements OrderService {
                 entity.getStatus());
     }
 
+    @Override
+    public void approveOrder(UUID orderId) {
+        OrderEntity entity = orderRepository.findById(orderId).orElse(null);
+        Assert.notNull(entity, "Order does not exist");
+        entity.setStatus(OrderStatus.APPROVED);
+        orderRepository.save(entity);
+        var orderCreatedEvent = new OrderApprovedEvent(orderId);
+        kafkaTemplate.send(ordersEventsTopicName, orderCreatedEvent);
+    }
 }

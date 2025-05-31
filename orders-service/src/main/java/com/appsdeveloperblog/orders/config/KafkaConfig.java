@@ -43,4 +43,13 @@ public class KafkaConfig {
                 .build();
     }
 
+    @Bean
+    NewTopic orderCommandsTopic(@Value("${kafka.topic.order.commands.name}") String orderCommandsTopicName) {
+        return TopicBuilder
+                .name(orderCommandsTopicName)
+                .partitions(3)
+                .replicas(3)
+                .build();
+    }
+
 }
