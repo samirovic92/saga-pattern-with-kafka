@@ -17,7 +17,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    NewTopic ordersTopic(@Value("${kafka.topic.order.name}") String ordersEventsTopicName) {
+    NewTopic ordersTopic(@Value("${kafka.topic.order.events.name}") String ordersEventsTopicName) {
         return TopicBuilder
                 .name(ordersEventsTopicName)
                 .partitions(3)
@@ -26,7 +26,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    NewTopic productsTopic(@Value("${kafka.topic.product.name}") String productsEventsTopicName) {
+    NewTopic productsTopic(@Value("${kafka.topic.product.commands.name}") String productsEventsTopicName) {
         return TopicBuilder
                 .name(productsEventsTopicName)
                 .partitions(3)
