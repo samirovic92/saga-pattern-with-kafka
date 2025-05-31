@@ -1,7 +1,9 @@
 package com.appsdeveloperblog.orders.saga;
 
+import com.appsdeveloperblog.core.commands.ProcessPaymentCommand;
 import com.appsdeveloperblog.core.commands.ReserveProductCommand;
 import com.appsdeveloperblog.core.events.OrderCreatedEvent;
+import com.appsdeveloperblog.core.events.ProductReservedEvent;
 import com.appsdeveloperblog.core.types.OrderStatus;
 import com.appsdeveloperblog.orders.service.OrderHistoryService;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,18 +14,24 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
-@KafkaListener(topics = "${kafka.topic.order.events.name}")
+@KafkaListener(topics = {
+        "${kafka.topic.order.events.name}",
+        "${kafka.topic.product.events.name}"
+})
 public class OrderSaga {
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final String productTopicName;
     private final OrderHistoryService orderHistoryService;
+    private final String productTopicName;
+    private final String paymentTopicName;
 
     public OrderSaga(KafkaTemplate<String, Object> kafkaTemplate,
+                     OrderHistoryService orderHistoryService,
                      @Value("${kafka.topic.product.commands.name}") String productTopicName,
-                     OrderHistoryService orderHistoryService) {
+                     @Value("${kafka.topic.payment.commands.name}") String paymentTopicName) {
         this.kafkaTemplate = kafkaTemplate;
         this.productTopicName = productTopicName;
         this.orderHistoryService = orderHistoryService;
+        this.paymentTopicName = paymentTopicName;
     }
 
     @KafkaHandler
@@ -35,5 +43,16 @@ public class OrderSaga {
         );
         this.kafkaTemplate.send(productTopicName, reserveProductCommand);
         this.orderHistoryService.add(event.orderId(), OrderStatus.CREATED);
+    }
+
+    @KafkaHandler
+    public void handleEvent(@Payload ProductReservedEvent event) {
+        var processPaymentCommand = new ProcessPaymentCommand(
+                event.orderId(),
+                event.productId(),
+                event.productQuantity(),
+                event.productPrice()
+        );
+        kafkaTemplate.send(paymentTopicName, processPaymentCommand);
     }
 }

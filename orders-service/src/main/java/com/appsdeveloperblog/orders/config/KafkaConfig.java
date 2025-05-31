@@ -34,4 +34,13 @@ public class KafkaConfig {
                 .build();
     }
 
+    @Bean
+    NewTopic paymentsTopic(@Value("${kafka.topic.payment.commands.name}") String paymentsEventsTopicName) {
+        return TopicBuilder
+                .name(paymentsEventsTopicName)
+                .partitions(3)
+                .replicas(3)
+                .build();
+    }
+
 }

@@ -18,7 +18,8 @@ public class KafkaConfig {
 
     @Bean
     NewTopic productEventsTopic(@Value("${kafka.topic.product.events.name}") String topicName) {
-        return TopicBuilder.name(topicName)
+        return TopicBuilder
+                .name(topicName)
                 .partitions(3)
                 .replicas(3)
                 .build();
